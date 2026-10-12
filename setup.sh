@@ -33,9 +33,15 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
     silversearcher-ag \
     exa \
     fzf \
+    bat \
+    hexyl \
     ripgrep \
     nano \
-    curl
+    curl \
+    python3 \
+    podman
+
+curl -fsSL https://tailscale.com/install.sh | sh
 
 if ! command -v fd >/dev/null 2>&1 && command -v fdfind >/dev/null 2>&1; then
     mkdir -p "$HOME/.local/bin"
@@ -43,23 +49,23 @@ if ! command -v fd >/dev/null 2>&1 && command -v fdfind >/dev/null 2>&1; then
 fi
 
 fish -c 'curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source; and fisher install jorgebucaran/fisher'
+fish -c 'fisher install jorgebucaran/nvm.fish; and nvm install latest; and set --universal nvm_default_version latest; and npm install --global --prefix "$HOME/.local" @kilocode/cli @opencode-ai/cli'
 curl -fsSL https://raw.githubusercontent.com/oh-my-fish/oh-my-fish/master/bin/install | fish
 
 FISH_CONFIG_DIR="$HOME/.config/fish"
 mkdir -p "$FISH_CONFIG_DIR/conf.d" "$FISH_CONFIG_DIR/functions"
+mkdir -p "$HOME/.local/bin"
 install -m 0644 "$SCRIPT_DIR"/fish/functions/*.fish "$FISH_CONFIG_DIR/functions/"
+install -m 0755 "$SCRIPT_DIR/scripts/ai-chat.py" "$HOME/.local/bin/ai-chat"
+if [[ -x "$HOME/.local/bin/opencode2" && ! -e "$HOME/.local/bin/opencode" ]]; then
+    ln -s opencode2 "$HOME/.local/bin/opencode"
+fi
+fish -c 'fish_add_path --prepend "$HOME/.local/bin"; and fisher install ryotako/fish-completion-generator PatrickF1/fzf.fish; and gencomp fish fd ag exa fzf rg nano curl python3 podman tailscale tailscaled node npm nvm kilo opencode'
 cat > "$FISH_CONFIG_DIR/conf.d/dotfiles-setup.fish" <<'FISH_CONFIG'
 fish_add_path --prepend "$HOME/.local/bin"
 
-if type -q fzf
-    fzf --fish | source
-end
-
 set -gx FZF_DEFAULT_COMMAND 'fd --hidden --strip-cwd-prefix --exclude .git'
-set -gx FZF_CTRL_T_COMMAND $FZF_DEFAULT_COMMAND
-set -gx FZF_ALT_C_COMMAND 'fd --type=d --hidden --strip-cwd-prefix --exclude .git'
-set -gx FZF_CTRL_T_OPTS "--preview '_fzf_complete_realpath {}'"
-set -gx FZF_ALT_C_OPTS "--preview '_fzf_complete_realpath {}'"
+fzf_configure_bindings --directory=ctrl-t
 FISH_CONFIG
 
 FISH_PATH="$(command -v fish)"
