@@ -35,25 +35,7 @@ case "$(uname -s)" in
         ;;
 esac
 
-SCRIPT_DIR=""
-if [[ -n "${BASH_SOURCE[0]:-}" && -f "${BASH_SOURCE[0]}" ]]; then
-    SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-fi
-
-# When run without a clone (bash -c "$(curl ...)"), download the rest of the repository first.
-if [[ -z "$SCRIPT_DIR" || ! -f "$SCRIPT_DIR/packages/install.sh" ]]; then
-    DOTFILES_REPO="${DOTFILES_REPO:-imnotdev25/dotfiles}"
-    SCRIPT_DIR="$(mktemp -d)"
-    trap 'rm -rf "$SCRIPT_DIR"' EXIT
-    echo "Downloading $DOTFILES_REPO..."
-    curl -fsSL "https://github.com/$DOTFILES_REPO/archive/HEAD.tar.gz" \
-        | tar -xzf - --strip-components=1 -C "$SCRIPT_DIR"
-    if [[ ! -f "$SCRIPT_DIR/packages/install.sh" ]]; then
-        echo "The download from $DOTFILES_REPO does not contain packages/install.sh." >&2
-        exit 1
-    fi
-fi
-
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 mkdir -p "$HOME/.local/bin"
 
 # System packages (Homebrew and packages/Brewfile on macOS, apt on Debian and Ubuntu).
